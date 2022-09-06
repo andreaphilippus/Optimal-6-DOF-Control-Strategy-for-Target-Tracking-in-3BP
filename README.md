@@ -1,5 +1,6 @@
 Optimal 6 Degree-of-Freedom Control Strategy for Target Tracking in Three Body Problem
 
+https://github.com/andreaphilippus/Optimal-6-DOF-Control-Strategy-for-Target-Tracking-in-3BP/
 
 
 
@@ -24,10 +25,11 @@ The code uses CasADi (https://web.casadi.org/) library for optimal control calcu
 This project is a continuation of the final project in a course, Applied Optimal Control and Estimation (AAE 56800), instructed by Professor Inseok Hwang in Spring 2022:
 
 Optimal Station-Keeping of a Satellite around the Sun-Earth L1 Lagrange Point using Model Predictive Control
+
 https://github.com/andreaphilippus/Sp22AAE568T3FinalProject
 
 Parts of the code are written/contributed by the members of the final project team in AAE 56800:
 
 	- Mark Batistich	| https://github.com/MarkBatistich	| https://www.linkedin.com/in/mark-batistich/
-	- Andrew Kim	| https://github.com/akimb		| https://www.linkedin.com/in/andrewkim101/
-	- Joseph Le	| https://github.com/josephtule	| https://www.linkedin.com/in/joseph-le-844823170/
+	- Andrew Kim		| https://github.com/akimb		| https://www.linkedin.com/in/andrewkim101/
+	- Joseph Le		| https://github.com/josephtule		| https://www.linkedin.com/in/joseph-le-844823170/
