@@ -3,9 +3,12 @@ Optimal 6 Degree-of-Freedom Control Strategy for Target Tracking in Three Body P
 
 
 
-Work by: Minyoung Andrea-Philippus Ra, BSAAE 22' MSAA 23' @ Purdue University - West Lafayette
+Work by: Minyoung Andrea-Philippus (Philip) Ra, BSAAE 22' MSAA 23' @ Purdue University - West Lafayette
+
 https://github.com/andreaphilippus/
+
 https://www.linkedin.com/in/philipra/
+
 mra@purdue.edu
 
 
