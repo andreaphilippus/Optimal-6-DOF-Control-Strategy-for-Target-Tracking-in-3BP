@@ -377,7 +377,7 @@ for k = 1:N
 
 end
 % Add terminal cost
-st_c = X(:,N+1);
+st_c = X(:,N+1);        % change this to N from N+1?
 st = SE3(reshape(st_c(1:9), 3, 3), st_c(10:12));
 
 p_c = P(:,N+1);
@@ -390,7 +390,7 @@ h = SE3(SB_e, R_e);
 
 %obj = obj + (st-P(:,N+1))'*Q*(st-P(:,N+1)); 
 
-%obj = obj + norm(Q.*(h - eye(4)), 'fro')^2;
+obj = obj + norm((h - eye(4)), 'fro');
 
 %obj = obj + Termweight * (norm(R_e) + norm(SB_e - eye(3), 'fro'));
 
@@ -633,6 +633,7 @@ xlim([0.8,1.2]*Var.lstar)
 ylim([-0.2,0.2]*Var.lstar)
 zlim([-0.2,0.2]*Var.lstar)
 
+%{
 figure(9)   % f Input
 
 subplot(311);
@@ -680,7 +681,7 @@ plot(t, f_mag, 'b', 'linewidth', 1.5); grid on
 ylabel('$||f||$')
 
 %sgtitle('Control Input Magnitude vs Time')
-
+%}
 figure(12)
 
 for i = 1:size(xx,3)-1
