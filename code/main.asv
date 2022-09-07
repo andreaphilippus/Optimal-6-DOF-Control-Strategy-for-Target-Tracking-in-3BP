@@ -390,7 +390,7 @@ h = SE3(SB_e, R_e);
 
 %obj = obj + (st-P(:,N+1))'*Q*(st-P(:,N+1)); 
 
-%obj = obj + norm(Q.*(h - eye(4)), 'fro')^2;
+obj = obj + norm(Q.*(h - eye(4)), 'fro')^2;
 
 %obj = obj + Termweight * (norm(R_e) + norm(SB_e - eye(3), 'fro'));
 
