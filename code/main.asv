@@ -42,7 +42,7 @@ Var.D1 = Var.m2 * Var.rEL / (Var.m1 + Var.m2);
 Var.mu = Var.m2 / (Var.m1 + Var.m2);
 Var.tol = 1e-12;                % Numerical Integration Tolerance
 
-Var.NumOrb = 2;                 % Number of orbits to propagate
+Var.NumOrb = 1;                 % Number of orbits to propagate
 
 Var.vecSize = 5000;              % Attitude r   epresentation vector length, km
 
@@ -204,6 +204,7 @@ addpath('casadi-windows-matlabR2016a-v3.5.5');
 import casadi.*
 
 wb = waitbar(0, "preparing...");
+tic
 
 orbitalElementStep = 16;    
 for i = 1:length(Traj_ref)
@@ -249,8 +250,8 @@ Var.taumax = 100;     % Maximum attitude control input
 % Parameter vectors have dimensions of number of states times initial + horizon step
 
 % Try having one p only: merge P and D?
-P = SX.sym('P', n_states, N+1); % Parameters of initial and desired states
-D = SX.sym('P', n_vels, N+1);   %              "                 vels
+P = SX.sym('P', n_states, N+6); % Parameters of initial and desired states
+D = SX.sym('D', n_vels, N+6);   %              "                 vels
 
 % Dynamics with control
 [statedot, cstatedot] = CasADiDynCont(states, vels, controls, Var);
@@ -279,10 +280,10 @@ for k = 1:N
     cste = V(:,k);   % current vel
     con = U(:,k);   % current control
     if k == 1     % For initial, need to consider the initial velocity
-        [k1,l1] = f(st, cste, con + D(1:6, N+1));                    % new 
-        [k2,l2] = f(st + T/2*k1, cste + T/2*l1, con + D(1:6, N+1));  % new
-        [k3,l3] = f(st + T/2*k2, cste + T/2*l2, con + D(1:6, N+1));  % new
-        [k4,l4] = f(st + T*k3, cste + T*l3, con + D(1:6, N+3));      % new
+        [k1,l1] = f(st, cste, con + D(1:6, N+6));                    % new 
+        [k2,l2] = f(st + T/2*k1, cste + T/2*l1, con + D(1:6, N+6));  % new
+        [k3,l3] = f(st + T/2*k2, cste + T/2*l2, con + D(1:6, N+6));  % new
+        [k4,l4] = f(st + T*k3, cste + T*l3, con + D(1:6, N+6));      % new
     else                  
         [k1,l1] = f(st, cste, con);                   % new 
         [k2,l2] = f(st + T/2*k1, cste + T/2*l1, con); % new
@@ -295,6 +296,7 @@ for k = 1:N
     V(:,k+1) = cst_next;
 end
 %}
+
 
 for k = 1:N
     st = X(:,k);    % current state
@@ -311,6 +313,7 @@ for k = 1:N
     X(:,k+1) = st_next;
     V(:,k+1) = cst_next;
 end
+
 
 %% MPC Setup
 
@@ -365,7 +368,7 @@ for k = 1:N
 
     h = SE3(SB_e, R_e);
     
-    %obj = obj + R_e' * R_e;
+    obj = obj + R_e' * R_e + con' * con;
 
     %obj = obj + (st-P(:,k+1))'*Q*(st-P(:,k+1)) + con'*R*con; 
 
@@ -396,7 +399,7 @@ R_e = p_c(10:12) - st_c(10:12);
 
 h = SE3(SB_e, R_e);
 
-obj = obj + R_e' * R_e;
+%obj = obj + R_e' * R_e;
 
 %obj = 1000;
 
@@ -454,7 +457,7 @@ args = struct;
 
 % Inequality constraints
 args.lbg = -inf;
-args.ubg = inf;
+args.ubg = 0;
 
 %input constraints here is negative infinity to infinity since input
 %constraint is defined separately later
@@ -477,6 +480,8 @@ xx1 = [];           % Temporary state variable storage
 vv1 = [];           % Temporary velocity variable storage
 u_cl = [];          % Temporary control variable storage
 
+
+
 % MPC
 
 while(mpciter < sim_tim/T)
@@ -491,13 +496,15 @@ while(mpciter < sim_tim/T)
     % Known P has a structure of [init, ref(1), ref(2), ..., ref(N)]
 
     args.p = LinST(x0);
-    for i = mpciter+1:mpciter+N+1
-        args.p(:,i-mpciter) = LinST(xd(:,:,i-mpciter+1));
+    for i = mpciter+1:mpciter+N+6
+        args.p(:,i-mpciter) = LinST(xd(:,:,i-mpciter+6));
     end
 
     % Likewise, for V
 
-    args.p = [args.p; vd(:,mpciter+1:mpciter+N+1)];
+    args.p = [args.p; vd(:,mpciter+1:mpciter+N+6)];
+
+    args.p
 
     %args.p = [LinST(x0) LinST(xd(:,:,mpciter+1:mpciter+N+1)) p; ...
     %    v0 vd(:,mpciter+1:mpciter+N+1) p2];  
@@ -533,6 +540,7 @@ while(mpciter < sim_tim/T)
     
 end
 close(wb);
+toc
 
 %% MPC Result Analysis
 
@@ -629,7 +637,8 @@ zlim([-0.2,0.2]*Var.lstar)
 
 % MPC Figureworks
 
-
+%figure(9)
+%plot()
 
 figure(8)
 
@@ -725,4 +734,4 @@ ylabel('$||\tau||$')
 xlabel('time')
 %sgtitle('Control Input vs Time')
 
-draw_video_CasADi(xx,xx1,N,xd,Var,7)
+%draw_video_CasADi(xx,xx1,N,xd,Var,7)

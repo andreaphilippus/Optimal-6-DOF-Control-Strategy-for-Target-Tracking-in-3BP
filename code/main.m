@@ -42,7 +42,7 @@ Var.D1 = Var.m2 * Var.rEL / (Var.m1 + Var.m2);
 Var.mu = Var.m2 / (Var.m1 + Var.m2);
 Var.tol = 1e-12;                % Numerical Integration Tolerance
 
-Var.NumOrb = 2;                 % Number of orbits to propagate
+Var.NumOrb = 1;                 % Number of orbits to propagate
 
 Var.vecSize = 5000;              % Attitude r   epresentation vector length, km
 
@@ -222,7 +222,7 @@ T = window_time / N;                    % Sampling Time
 
 xd = cat(3, xd(:,:,1), repmat(xd(:,:,2:end), [1 1 Var.NumOrb+1]));      % Desired state, g^0
 vd = [vd(:,1) repmat(vd(:,2:end), 1, Var.NumOrb+1)];                    % Desired velocity, v^0 
-toc
+
 % Define states using CasADi symbolic
 x = SX.sym('x'); y = SX.sym('y'); z = SX.sym('z');
 C11 = SX.sym('C11'); C12 = SX.sym('C12'); C13 = SX.sym('C13');
@@ -250,8 +250,8 @@ Var.taumax = 100;     % Maximum attitude control input
 % Parameter vectors have dimensions of number of states times initial + horizon step
 
 % Try having one p only: merge P and D?
-P = SX.sym('P', n_states, N+1); % Parameters of initial and desired states
-D = SX.sym('D', n_vels, N+1);   %              "                 vels
+P = SX.sym('P', n_states, N+7); % Parameters of initial and desired states
+D = SX.sym('D', n_vels, N+7);   %              "                 vels
 
 % Dynamics with control
 [statedot, cstatedot] = CasADiDynCont(states, vels, controls, Var);
@@ -280,10 +280,10 @@ for k = 1:N
     cste = V(:,k);   % current vel
     con = U(:,k);   % current control
     if k == 1     % For initial, need to consider the initial velocity
-        [k1,l1] = f(st, cste, con + D(1:6, N+1));                    % new 
-        [k2,l2] = f(st + T/2*k1, cste + T/2*l1, con + D(1:6, N+1));  % new
-        [k3,l3] = f(st + T/2*k2, cste + T/2*l2, con + D(1:6, N+1));  % new
-        [k4,l4] = f(st + T*k3, cste + T*l3, con + D(1:6, N+3));      % new
+        [k1,l1] = f(st, cste, con + D(1:6, N+6));                    % new 
+        [k2,l2] = f(st + T/2*k1, cste + T/2*l1, con + D(1:6, N+6));  % new
+        [k3,l3] = f(st + T/2*k2, cste + T/2*l2, con + D(1:6, N+6));  % new
+        [k4,l4] = f(st + T*k3, cste + T*l3, con + D(1:6, N+6));      % new
     else                  
         [k1,l1] = f(st, cste, con);                   % new 
         [k2,l2] = f(st + T/2*k1, cste + T/2*l1, con); % new
@@ -296,6 +296,7 @@ for k = 1:N
     V(:,k+1) = cst_next;
 end
 %}
+
 
 for k = 1:N
     st = X(:,k);    % current state
@@ -312,6 +313,7 @@ for k = 1:N
     X(:,k+1) = st_next;
     V(:,k+1) = cst_next;
 end
+
 
 %% MPC Setup
 
@@ -337,7 +339,7 @@ R(3,3) = 0.01; % Torque in z
 R(4,4) = 1; % Thrust in x
 R(5,5) = 1; % Thrust in y
 R(6,6) = 1; % Thrust in z
-R = 1 * R;
+%R = 1 * R;
 Termweight = 10;
 
 
@@ -348,25 +350,25 @@ for k = 1:N
     st = SE3(reshape(st_c(1:9), 3, 3), st_c(10:12)); % State, g
     
     % Reminder: P is the reference states
-    %p_c = P(:,k+1);
+    p_c = P(:,k+1);
     %p_test = SE3(reshape(p_c(1:9), 3, 3), p_c(10:12)); % Desired state, g0
     
     % test: reference state:
-    p_c = xd(:,:,k);
+    %p_c = xd(:,:,k+1);
 
     con = U(:,k);
     
     % Error in attitude
-    %SB_e = reshape(p_c(1:9),3,3)' * reshape(st_c(1:9),3,3);
-    SB_e = p_c(1:3,1:3)' * st(1:3,1:3);
+    SB_e = reshape(p_c(1:9),3,3)' * reshape(st_c(1:9),3,3);
+    %SB_e = p_c(1:3,1:3)' * st(1:3,1:3);
 
     % Error in position
-    %R_e = p_c(10:12) - st_c(10:12);
-    R_e = p_c(1:3,4) - st(1:3,4);
+    R_e = p_c(10:12) - st_c(10:12);
+    %R_e = p_c(1:3,4) - st(1:3,4);
 
     h = SE3(SB_e, R_e);
     
-    %obj = obj + R_e' * R_e;
+    obj = obj + R_e' * Q * R_e + con' * R * con;
 
     %obj = obj + (st-P(:,k+1))'*Q*(st-P(:,k+1)) + con'*R*con; 
 
@@ -397,7 +399,7 @@ R_e = p_c(10:12) - st_c(10:12);
 
 h = SE3(SB_e, R_e);
 
-%obj = obj + R_e' * R_e;
+obj = obj + R_e' * R_e;
 
 %obj = 1000;
 
@@ -478,6 +480,8 @@ xx1 = [];           % Temporary state variable storage
 vv1 = [];           % Temporary velocity variable storage
 u_cl = [];          % Temporary control variable storage
 
+
+
 % MPC
 
 while(mpciter < sim_tim/T)
@@ -492,13 +496,15 @@ while(mpciter < sim_tim/T)
     % Known P has a structure of [init, ref(1), ref(2), ..., ref(N)]
 
     args.p = LinST(x0);
-    for i = mpciter+1:mpciter+N+1
-        args.p(:,i-mpciter) = LinST(xd(:,:,i-mpciter+1));
+    for i = mpciter+1:mpciter+N+6
+        args.p(:,i-mpciter+1) = LinST(xd(:,:,i+1));
     end
 
     % Likewise, for V
 
-    args.p = [args.p; vd(:,mpciter+1:mpciter+N+1)];
+    args.p = [args.p; v0 vd(:,mpciter+2:mpciter+N+7)];
+
+    args.p
 
     %args.p = [LinST(x0) LinST(xd(:,:,mpciter+1:mpciter+N+1)) p; ...
     %    v0 vd(:,mpciter+1:mpciter+N+1) p2];  
@@ -520,6 +526,7 @@ while(mpciter < sim_tim/T)
     x0 = SE3(reshape(x0(1:9),3,3), x0(10:12));
     xx(:,:,mpciter+2) = x0;
     vv(:,mpciter+2) = v0;
+
     
     mpciter = mpciter + 1;
     waitbar(mpciter / (sim_tim/T), wb, ...
@@ -631,7 +638,8 @@ zlim([-0.2,0.2]*Var.lstar)
 
 % MPC Figureworks
 
-
+%figure(9)
+%plot()
 
 figure(8)
 
@@ -727,4 +735,4 @@ ylabel('$||\tau||$')
 xlabel('time')
 %sgtitle('Control Input vs Time')
 
-%draw_video_CasADi(xx,xx1,N,xd,Var,7)
+draw_video_CasADi(xx,xx1,N,xd,Var,7)
