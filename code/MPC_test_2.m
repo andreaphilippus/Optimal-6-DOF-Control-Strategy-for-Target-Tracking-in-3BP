@@ -230,7 +230,7 @@ while(mpciter < sim_tim/T)
 end
 close(w);
 
-%draw_video_CR3BP_3D(t,xx,xx1,u_cl,xs,N,xd,1)
+draw_video_CR3BP_3D(t,xx,xx1,u_cl,xs,N,xd,1)
 
 figure(2);
 x = xx(1,:);

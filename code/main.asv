@@ -42,7 +42,7 @@ Var.D1 = Var.m2 * Var.rEL / (Var.m1 + Var.m2);
 Var.mu = Var.m2 / (Var.m1 + Var.m2);
 Var.tol = 1e-12;                % Numerical Integration Tolerance
 
-Var.NumOrb = 3;                 % Number of orbits to propagate
+Var.NumOrb = 2;                 % Number of orbits to propagate
 
 Var.vecSize = 5000;              % Attitude r   epresentation vector length, km
 
@@ -205,7 +205,7 @@ import casadi.*
 
 wb = waitbar(0, "preparing...");
 
-orbitalElementStep = 64;    
+orbitalElementStep = 16;    
 for i = 1:length(Traj_ref)
     xd(:,:,i) = SE3(SB_ref, Traj_ref(i,1:3)');
 end
@@ -215,7 +215,7 @@ vd = [zeros(3,length(Traj_ref)); Traj_ref(:,4:6)'];
 
 t = Traj_ref(end,:);
 sim_tim = t(end) * Var.NumOrb;          % Maximum Simulation Time
-N = 64;                                 % Prediction Horizon Step
+N = 32;                                 % Prediction Horizon Step
 window_time = t(end)/(size(xd,3)/N);    % Prediction Horizon Time
 T = window_time / N;                    % Sampling Time
 
@@ -248,6 +248,7 @@ Var.taumax = 100;     % Maximum attitude control input
 % Parameter vectors
 % Parameter vectors have dimensions of number of states times initial + horizon step
 
+% Try having one p only: merge P and D?
 P = SX.sym('P', n_states, N+1); % Parameters of initial and desired states
 D = SX.sym('P', n_vels, N+1);   %              "                 vels
 
@@ -326,7 +327,7 @@ cst = [];   % Constraints
 %Q(1:3,1:3) = 0.001;             % Attitude
 %Q(1:3, 4) = 0.0001;             % Position
 
-Q = diag([0.1 0.1 0.1]);
+Q = diag([1000 1000 1000]);
 
 R = zeros(6);
 R(1,1) = 0.01; % Torque in x
@@ -346,19 +347,26 @@ for k = 1:N
     st = SE3(reshape(st_c(1:9), 3, 3), st_c(10:12)); % State, g
     
     % Reminder: P is the reference states
-    p_c = P(:,k);
-    p_test = SE3(reshape(p_c(1:9), 3, 3), p_c(10:12)); % Desired state, g0
+    %p_c = P(:,k+1);
+    %p_test = SE3(reshape(p_c(1:9), 3, 3), p_c(10:12)); % Desired state, g0
+    
+    % test: reference state:
+    p_c = xd(:,:,k);
 
     con = U(:,k);
     
     % Error in attitude
-    SB_e = reshape(p_c(1:9),3,3)' * reshape(st_c(1:9),3,3);
-    
+    %SB_e = reshape(p_c(1:9),3,3)' * reshape(st_c(1:9),3,3);
+    SB_e = p_c(1:3,1:3)' * st(1:3,1:3);
+
     % Error in position
-    R_e = p_c(10:12) - st_c(10:12);
+    %R_e = p_c(10:12) - st_c(10:12);
+    R_e = p_c(1:3,4) - st(1:3,4);
 
     h = SE3(SB_e, R_e);
     
+    %obj = obj + R_e' * R_e;
+
     %obj = obj + (st-P(:,k+1))'*Q*(st-P(:,k+1)) + con'*R*con; 
 
     %obj = obj + Q*norm(st - p_c, 'fro')^2 + con' * R * con;
@@ -373,11 +381,11 @@ for k = 1:N
     
     %obj = obj + R_e' * Q * R_e + con' * R * con;
     
-    obj = obj + 0;
+    
 
 end
 % Add terminal cost
-st_c = X(:,N+1);
+st_c = X(:,N+1);        % change this to N from N+1?
 st = SE3(reshape(st_c(1:9), 3, 3), st_c(10:12));
 
 p_c = P(:,N+1);
@@ -388,9 +396,16 @@ R_e = p_c(10:12) - st_c(10:12);
 
 h = SE3(SB_e, R_e);
 
+obj = obj + R_e' * R_e;
+
+%obj = 1000;
+
 %obj = obj + (st-P(:,N+1))'*Q*(st-P(:,N+1)); 
 
-obj = obj + norm(Q.*(h - eye(4)), 'fro')^2;
+%obj = obj + norm((h - eye(4)), 'fro');
+
+X_f = [R_e; reshape(SB_e - eye(3), 9, 1)];
+%obj = obj + X_f' * X_f;
 
 %obj = obj + Termweight * (norm(R_e) + norm(SB_e - eye(3), 'fro'));
 
@@ -509,6 +524,13 @@ while(mpciter < sim_tim/T)
     waitbar(mpciter / (sim_tim/T), wb, ...
         sprintf("calculating optimal control: %.2f%%", ...
         100*mpciter / (sim_tim/T)));
+    
+    % If the spacecraft diverges off track too much, stops simulation
+    if norm(x0(1:3,4) - xd(1:3,4,i-mpciter+1)) > 1e5/Var.lstar % 10^5 km dimensionalized
+        disp("Result diverged. Simulation terminated.")
+        break;
+    end
+    
 end
 close(wb);
 
@@ -607,7 +629,7 @@ zlim([-0.2,0.2]*Var.lstar)
 
 % MPC Figureworks
 
-%draw_video_CasADi(xx,xx1,N,xd,Var,7)
+
 
 figure(8)
 
@@ -633,53 +655,8 @@ xlim([0.8,1.2]*Var.lstar)
 ylim([-0.2,0.2]*Var.lstar)
 zlim([-0.2,0.2]*Var.lstar)
 
-figure(9)   % f Input
-
-subplot(311);
-stairs(t,u_cl(:,4),'b','linewidth',1.5); 
-ylabel('$f_x$');
-grid on;
-subplot(312);
-stairs(t,u_cl(:,5),'b','linewidth',1.5);
-ylabel('$f_y$');
-grid on;
-subplot(313);
-stairs(t,u_cl(:,6),'b','linewidth',1.5);
-xlabel('time (s)');
-ylabel('$f_z$');
-grid on;
-
-figure(10)  % tau Input
-
-subplot(311);
-stairs(t,u_cl(:,1),'b','linewidth',1.5); 
-ylabel('$\tau_x$');
-grid on;
-subplot(312);
-stairs(t,u_cl(:,2),'b','linewidth',1.5);
-ylabel('$\tau_y$');
-grid on;
-subplot(313);
-stairs(t,u_cl(:,3),'b','linewidth',1.5);
-xlabel('time (s)');
-ylabel('$\tau_z$');
-grid on;
-
-figure(11)
-
-subplot(211)
 tau_mag = sqrt(u_cl(:,1).^2 + u_cl(:,2).^2 + u_cl(:,3).^2);
-
-plot(t, tau_mag, 'b', 'linewidth', 1.5); grid on
-ylabel('$||\tau||$')
-
-subplot(212)
 f_mag = sqrt(u_cl(:,4).^2 + u_cl(:,5).^2 + u_cl(:,6).^2);
-
-plot(t, f_mag, 'b', 'linewidth', 1.5); grid on
-ylabel('$||f||$')
-
-%sgtitle('Control Input Magnitude vs Time')
 
 figure(12)
 
@@ -699,6 +676,7 @@ xlabel('time')
 ylabel('$||h-I_4||_F$')
 %title('Error ($||h-I_4||_F$) vs Time')
 
+
 figure(13)
 subplot(3,6,[1:3; 7:9; 13:15])
 plot(t, abs_pos_err); grid
@@ -715,6 +693,8 @@ plot(t, reshape(temp(3,4,:),length(t),1)); grid
 ylabel('$z_e$')
 xlabel('time')
 %sgtitle('Errors vs Time')
+
+
 
 figure(14)
 subplot(6,6,[1:3 7:9 13:15])
@@ -744,3 +724,5 @@ plot(t, tau_mag, 'b', 'linewidth', 1.5); grid         % Change to stairs?
 ylabel('$||\tau||$')
 xlabel('time')
 %sgtitle('Control Input vs Time')
+
+draw_video_CasADi(xx,xx1,N,xd,Var,7)

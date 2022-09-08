@@ -221,6 +221,12 @@ while(mpciter < sim_tim/T)
     xx(:,mpciter+2) = x0;
     mpciter = mpciter + 1;
     waitbar(mpciter / (sim_tim/T), w, sprintf("calculating optimal control: %.2f%%", 100*mpciter / (sim_tim/T)));
+    
+    % If the spacecraft diverges off track too much, stops simulation
+    if norm(x0(1:3)) > 1e7/Var.lstar % 10^7 km dimensionalized
+        disp("Result diverged. Simulation terminated.")
+        break;
+    end
 end
 close(w);
 
