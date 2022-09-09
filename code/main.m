@@ -42,7 +42,7 @@ Var.D1 = Var.m2 * Var.rEL / (Var.m1 + Var.m2);
 Var.mu = Var.m2 / (Var.m1 + Var.m2);
 Var.tol = 1e-12;                % Numerical Integration Tolerance
 
-Var.NumOrb = 1;                 % Number of orbits to propagate
+Var.NumOrb = 3;                 % Number of orbits to propagate
 
 Var.vecSize = 5000;              % Attitude r   epresentation vector length, km
 
@@ -330,15 +330,16 @@ cst = [];   % Constraints
 %Q(1:3,1:3) = 0.001;             % Attitude
 %Q(1:3, 4) = 0.0001;             % Position
 
-Q = diag([1000 1000 1000]);
+%Q = diag([1000 1000 1000]);
+Q = 1000;
 
 R = zeros(6);
-R(1,1) = 0.01; % Torque in x
-R(2,2) = 0.01; % Torque in y
-R(3,3) = 0.01; % Torque in z
-R(4,4) = 1; % Thrust in x
-R(5,5) = 1; % Thrust in y
-R(6,6) = 1; % Thrust in z
+R(1,1) = 1; % Torque in x
+R(2,2) = 1; % Torque in y
+R(3,3) = 1; % Torque in z
+R(4,4) = 100; % Thrust in x
+R(5,5) = 100; % Thrust in y
+R(6,6) = 100; % Thrust in z
 %R = 1 * R;
 Termweight = 10;
 
@@ -368,13 +369,13 @@ for k = 1:N
 
     h = SE3(SB_e, R_e);
     
-    obj = obj + R_e' * Q * R_e + con' * R * con;
+    %obj = obj + R_e' * Q * R_e + con' * R * con;
 
     %obj = obj + (st-P(:,k+1))'*Q*(st-P(:,k+1)) + con'*R*con; 
 
     %obj = obj + Q*norm(st - p_c, 'fro')^2 + con' * R * con;
     
-    %obj = obj + norm(Q.*(h - eye(4)), 'fro')^2 + con' * R * con;
+    obj = obj + norm(Q.*(h - eye(4)), 'fro')^2 + con' * R * con;
     
     %obj = obj + norm(R_e) + norm(SB_e - eye(3), 'fro') + con' * R * con;
 
@@ -405,9 +406,9 @@ obj = obj + R_e' * R_e;
 
 %obj = obj + (st-P(:,N+1))'*Q*(st-P(:,N+1)); 
 
-%obj = obj + norm((h - eye(4)), 'fro');
+obj = obj + norm(Q*(h - eye(4)), 'fro')^2;
 
-X_f = [R_e; reshape(SB_e - eye(3), 9, 1)];
+%X_f = [R_e; reshape(SB_e - eye(3), 9, 1)];
 %obj = obj + X_f' * X_f;
 
 %obj = obj + Termweight * (norm(R_e) + norm(SB_e - eye(3), 'fro'));
@@ -457,7 +458,7 @@ args = struct;
 
 % Inequality constraints
 args.lbg = -inf;
-args.ubg = 0;
+args.ubg = inf;
 
 %input constraints here is negative infinity to infinity since input
 %constraint is defined separately later
@@ -503,8 +504,6 @@ while(mpciter < sim_tim/T)
     % Likewise, for V
 
     args.p = [args.p; v0 vd(:,mpciter+2:mpciter+N+7)];
-
-    args.p
 
     %args.p = [LinST(x0) LinST(xd(:,:,mpciter+1:mpciter+N+1)) p; ...
     %    v0 vd(:,mpciter+1:mpciter+N+1) p2];  
@@ -735,4 +734,5 @@ ylabel('$||\tau||$')
 xlabel('time')
 %sgtitle('Control Input vs Time')
 
+%% Video
 draw_video_CasADi(xx,xx1,N,xd,Var,7)

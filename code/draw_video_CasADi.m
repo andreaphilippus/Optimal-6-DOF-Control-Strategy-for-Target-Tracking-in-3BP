@@ -30,7 +30,6 @@ fileName = strrep(fileName, ':', '.');
 
 for i = 1:size(xd,3)
     [~,Rd(:,i)] = invSE3(xd(:,:,i));
-    %[~,R(:,i)] = invSE3(xx(:,:,i));
 end
 
 Temp.lstar = Var.lstar;
@@ -39,13 +38,13 @@ Temp.vecSize = Var.vecSize * 3;
 for k = 1:size(xx,3)
     
     % Plot L2 Point
-    plot3(L2(1),L2(2),L2(3),'r*');  hold on;
+    l2 = plot3(L2(1),L2(2),L2(3),'r*');  hold on;
 
     % Plot Reference Attitude
     DrawAttitude(k, xd, Temp, 'bk')
 
     % Plot Reference Trajectory
-    plot3(Rd(1,:)*Var.lstar, Rd(2,:)*Var.lstar,Rd(3,:)*Var.lstar, 'k-')
+    ref_traj = plot3(Rd(1,:)*Var.lstar, Rd(2,:)*Var.lstar,Rd(3,:)*Var.lstar, 'k-');
     
     % Plot Exhibited Attitude
     DrawAttitude(k, xx, Temp, 'cl')
@@ -59,20 +58,20 @@ for k = 1:size(xx,3)
     y_r_1 = [y_r_1 y1];
     z_r_1 = [z_r_1 z1];
 
-    plot3(x_r_1,y_r_1,z_r_1,'-b','linewidth',line_width)
+    sc_traj = plot3(x_r_1,y_r_1,z_r_1,'-b','linewidth',line_width);
 
     % Plot Trajectory Prediction
     if k < size(xx,3) 
-        plot3(xx1(1:N,10,k)*Var.lstar,xx1(1:N,11,k)*Var.lstar,...
-            xx1(1:N,12,k)*Var.lstar, 'g-', 'linewidth', line_width)
+        mpc_traj = plot3(xx1(1:N,10,k)*Var.lstar,xx1(1:N,11,k)*Var.lstar,...
+            xx1(1:N,12,k)*Var.lstar, 'g-', 'linewidth', line_width);
     end
     
-    plot3(x1, y1, z1, 'k*', 'MarkerSize', 10); % plot position
+    sc_pos = plot3(x1, y1, z1, 'k*', 'MarkerSize', 10); % plot position
    
     hold off
-    ylabel('$y$-position','interpreter','latex','FontSize',fontsize_labels)
-    xlabel('$x$-position','interpreter','latex','FontSize',fontsize_labels)
-    zlabel('$z$-position','interpreter','latex','FontSize',fontsize_labels)
+    ylabel('$y$ (km)','interpreter','latex','FontSize',fontsize_labels)
+    xlabel('$x$ (km)','interpreter','latex','FontSize',fontsize_labels)
+    zlabel('$z$ (km)','interpreter','latex','FontSize',fontsize_labels)
 
     %axis([0.985, 1.015 -0.010, 0.010]);
     axis equal
@@ -85,9 +84,9 @@ for k = 1:size(xx,3)
     view([45 15])
     drawnow
     % for video generation
-    lgd = legend("L2 point", "Reference Trajectory", ...
-        "Spacecraft Trajectory", "MPC predicted trajectory", ...
-        "Spacecraft Position");
+    legend([l2 ref_traj sc_traj mpc_traj sc_pos], "L2 point", ...
+        "Reference Trajectory", "Spacecraft Trajectory", ...
+        "MPC predicted trajectory", "Spacecraft Position")
     %lgd.FontSize = 7;
     %lgd.Location = 'eastoutside';
     set(gca, 'CameraPosition', [1.5 -0.4 0.4]*Var.lstar);
