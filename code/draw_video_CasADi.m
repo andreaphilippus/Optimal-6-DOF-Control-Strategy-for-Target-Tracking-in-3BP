@@ -85,9 +85,15 @@ for k = 1:size(xx,3)
     view([45 15])
     drawnow
     % for video generation
+<<<<<<< Updated upstream
     lgd = legend("L2 point", "Reference Trajectory", ...
         "Spacecraft Trajectory", "MPC predicted trajectory", ...
         "Spacecraft Position");
+=======
+    %leg = legend([l2 ref_traj sc_traj mpc_traj sc_pos], "L2 point", ...
+    %    "Reference Trajectory", "Spacecraft Trajectory", ...
+    %    "MPC predicted trajectory", "Spacecraft Position");
+>>>>>>> Stashed changes
     %lgd.FontSize = 7;
     %lgd.Location = 'eastoutside';
     set(gca, 'CameraPosition', [1.5 -0.4 0.4]*Var.lstar);

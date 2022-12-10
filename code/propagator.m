@@ -1,4 +1,4 @@
-function [t, g, v] = propagator(X0, tspan, Var)
+function [t, g, v] = propagator(X0, tspan, Var, pert)
     opt = odeset('Reltol',Var.tol,'Abstol',Var.tol);
     
     for i = 1:Var.NumOrb-1
@@ -6,9 +6,15 @@ function [t, g, v] = propagator(X0, tspan, Var)
     end
 
     %tspan = linspace(0,tspan(end),10);
+    
+    if nargin == 3 % When perturbation is not added
+        [t, y] = ode45(@(t,X) Dyn_Comb(t,X,Var), tspan, X0, opt);
+    elseif nargin == 4
+        [t, y] = ode45(@(t,X) Dyn_Comb(t,X,Var, pert), tspan, X0, opt);
+    end
 
     % Use ode45 for integrator
-    [t, y] = ode45(@(t,X) Dyn_Comb(t,X,Var), tspan, X0, opt);
+    
 
     for i = 1:length(t)
         % The following quantities are in N frame

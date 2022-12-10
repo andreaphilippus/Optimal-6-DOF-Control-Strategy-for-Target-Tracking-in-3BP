@@ -32,7 +32,7 @@ Var.tstar = 377084.1526670386;  % Characteristic time, s
 Var.mu = Var.m2 / (Var.m1 + Var.m2);
 Var.tol = 1e-12;            % Numerical Integration Tolerance
 Var.ds = 0.0005;             % Pseudo-arclength step size
-Var.NumFam = 150;            % Number of orbits to generate for one family
+Var.NumFam = 3;            % Number of orbits to generate for one family
 
 %% Obtain L2 Lagrange Point
 
