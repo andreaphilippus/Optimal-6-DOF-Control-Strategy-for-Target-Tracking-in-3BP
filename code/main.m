@@ -270,7 +270,7 @@ R(5,5) = 1; % Thrust in y
 R(6,6) = 1; % Thrust in z
 R = 1 * R;
 Termweight = 10;
-=======
+
 %Q = diag([1000 1000 1000]);
 Q = 100;
 
@@ -283,7 +283,6 @@ R(3,3) = 0.1; % Torque in z
 R(4,4) = 1; % Thrust in x
 R(5,5) = 1; % Thrust in y
 R(6,6) = 1; % Thrust in z
->>>>>>> Stashed changes
 
 Termweight = 5;
 
@@ -295,14 +294,12 @@ for k = 1:N
 
     % Reminder: P is the reference states
     p_c = P(:,k);
-<<<<<<< Updated upstream
     p_test = SE3(reshape(p_c(1:9), 3, 3), p_c(10:12)); % Desired state, g0
-=======
+
     %p_test = SE3(reshape(p_c(1:9), 3, 3), p_c(10:12)); % Desired state, g0
     
     % test: reference state:
     %p_c = xd(:,:,k+1);
->>>>>>> Stashed changes
 
     % Velocity
     vel = V(:,k);
@@ -326,12 +323,12 @@ for k = 1:N
 
     %obj = obj + Q*norm(st - p_c, 'fro')^2 + con' * R * con;
     
-<<<<<<< Updated upstream
+
     %obj = obj + norm(Q.*(h - eye(4)), 'fro')^2 + con' * R * con;
-=======
+
     %obj = obj + Q*norm((h - eye(4)), 'fro')^2 + vel_e' * S * vel_e + con' * R * con;
     obj = obj + Q*norm((h - eye(4)), 'fro')^2 + con' * R * con;
->>>>>>> Stashed changes
+
     
     %obj = obj + norm(R_e) + norm(SB_e - eye(3), 'fro') + con' * R * con;
 
@@ -360,11 +357,11 @@ vel_e = d_c - vel;
 
 h = SE3(SB_e, R_e);
 
-<<<<<<< Updated upstream
+
 %obj = obj + (st-P(:,N+1))'*Q*(st-P(:,N+1)); 
 
 %obj = obj + Termweight * norm(Q.*(h - eye(4)), 'fro')^2;
-=======
+
 %obj = obj + R_e' * R_e;
 
 %obj = 1000;
@@ -377,7 +374,7 @@ obj = obj + Q*norm((h - eye(4)), 'fro')^2;
 
 %X_f = [R_e; reshape(SB_e - eye(3), 9, 1)];
 %obj = obj + X_f' * X_f;
->>>>>>> Stashed changes
+
 
 %obj = obj + Termweight * (norm(R_e) + norm(SB_e - eye(3), 'fro'));
 
@@ -463,8 +460,8 @@ while(mpciter < sim_tim/T)
     %att_pert = EA323toDCM(0.0001 * randn(3,1));
 
     % Velocities are the dynamical quantities that can be perturbed
-    rot_pert = 0.001 * randn(3,1);
-    trs_pert = 0.005 * randn(3,1);
+    rot_pert = 0.0005 * randn(3,1) * timestep;
+    trs_pert = 0.001 * randn(3,1) * timestep;
 
     %x0 = SE_addition(x0, SE3(att_pert, [0 0 0]'));
     v0 = v0 + [rot_pert; trs_pert];

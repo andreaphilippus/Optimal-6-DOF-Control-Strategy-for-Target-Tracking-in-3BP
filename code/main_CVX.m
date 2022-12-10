@@ -151,10 +151,13 @@ load('lindyn.mat')
 load('Bf.mat')
 while(mpciter < sim_tim/timestep)
     
-    %p2 = zeros(6,1);        % Perturbation on velocities
-    %p = zeros(12,1);        % Perturbation on state
+    % perturbation
 
-    %v0 = v0 + p2 * timestep;       % Perturbation over step added
+    rot_pert = 0.001 * randn(3,1);
+    trs_pert = 0.005 * randn(3,1);
+
+    %x0 = SE_addition(x0, SE3(att_pert, [0 0 0]'));
+    v0 = v0 + [rot_pert; trs_pert] * timestep;
 
     % desired
     g_des(:,:,1) = x0;
