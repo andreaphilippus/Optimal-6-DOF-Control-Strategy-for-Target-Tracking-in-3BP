@@ -1,4 +1,4 @@
-function Xdot = Dyn_Comb(t, X, Var)
+function Xdot = Dyn_Comb(t, X, Var, pert)
     
     %% Input Variables
 
@@ -14,6 +14,10 @@ function Xdot = Dyn_Comb(t, X, Var)
     w = X(4:6);                     % Angular Velocity
     
     w1 = w(1); w2 = w(2); w3 = w(3);
+
+    if nargin == 3 % When perturbation not added:
+        pert = [0 0]';
+    end
 
     % Parameters
     m1 = Var.m1; m2 = Var.m2; mu = Var.mu;
@@ -54,7 +58,7 @@ function Xdot = Dyn_Comb(t, X, Var)
 
     nudotS = [2*ydot + x - (1-mu)*(x+mu)/d13^3 - mu*(x-1+mu)/d23^3;
         y - 2*xdot - (1-mu)*y/d13^3 - mu*y/d23^3;
-        - (1-mu)*z/d13^3 - mu*z/d23^3];
+        - (1-mu)*z/d13^3 - mu*z/d23^3] + pert(2)*randn(3,1);
     
     %nudotB = SB' * nudotS;
 
