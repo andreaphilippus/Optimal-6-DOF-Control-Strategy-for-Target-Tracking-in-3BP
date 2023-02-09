@@ -2,8 +2,8 @@ function DrawAttitude(index,g,Var,bkcl)
 
     [NB, R] = invSE3(g(:,:,index)); 
 
-    R = Var.lstar * R;
-    NB = Var.vecSize * NB;
+    %R = Var.lstar * R;
+    NB = Var.vecSize/Var.lstar * NB;
     xhat = NB(:,1); yhat = NB(:,2); zhat = NB(:,3);
 
     if bkcl == 'cl'

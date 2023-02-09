@@ -1,0 +1,26 @@
+function vdot = SE3Dynamics(v, g, u, I, mu)
+    
+    [C, R] = invSE3(g);
+
+    [~, UXX] = U_Partial(R(1), R(2), R(3), mu);
+
+    % CR3BP Gravitational Force
+    %d = sqrt((R(1) + mu).^2 + R(2).^2 + R(3).^2);
+    %r = sqrt((R(1)-1+mu).^2 + R(2).^2 + R(3).^2);
+    %
+    d = [R(1) + mu; R(2); R(3)];
+    r = [(R(1)-1+mu); R(2); R(3)];
+
+    %F_g_Earth = -(1-mu)/norm(d)^3 * d;
+    %F_g_Moon = -(mu)/norm(r)^3 * r;
+    
+    %Fg = F_g_Moon + F_g_Earth;
+    %}
+    %Fg = -UXX*R + [0 2 0; -2 0 0; 0 0 0] * C * v(4:6);
+
+    Fg = -(1-mu)*R/
+
+    phi = [0;0;0; Fg];
+    vdot = I\(Coadj(v)*I*v + u ) + phi ;
+   
+end

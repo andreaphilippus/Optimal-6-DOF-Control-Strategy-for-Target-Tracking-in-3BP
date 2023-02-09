@@ -2,6 +2,7 @@ function DrawAttitude_dim(index,g,Var,bkcl)
 
     [NB, R] = invSE3(g(:,:,index)); 
 
+    %vecsize = Var.vecSize / Var.lstar;
     NB = Var.vecSize * NB;
     xhat = NB(:,1); yhat = NB(:,2); zhat = NB(:,3);
 

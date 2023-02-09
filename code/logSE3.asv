@@ -27,7 +27,7 @@ function eta = logSE3(g0, g)
 
     %% beta
 
-    beta = S\Re;
+    beta = S\R;
 
     eta = [thetavec; beta];
 end

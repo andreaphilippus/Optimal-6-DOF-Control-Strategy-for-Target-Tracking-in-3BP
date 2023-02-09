@@ -54,22 +54,21 @@ Var.L2x = L2LagrangePoint(Var.mu);
 % Southern Halo
 load('Shaloorbits.mat');
 
-Traj_ref = x_Halo2{1500};          % Reference Trajectory (pos/vel), nondim
+Traj_ref = x_Halo2{1500}(:,1:6);          % Reference Trajectory (pos/vel), nondim
 tspan = x_Halo2{1500}(:,end);      % Reference time-span
 
 %SB_ref = EA323toDCM(pi/6, -pi/3, pi/4);                 % Reference Attitude
 SB_ref = eye(3);
 
-%% Halo Orbit
 %% Initial Condition
 
 SB0 = SB_ref;
 R0 = Traj_ref(1,1:3)';            % In N frame; with SB0 = eye(3), it is the same in B frame.
 nu0 = Traj_ref(1,4:6)'; % In S frame
-w0 = [pi/4 pi/2 2*pi/6]';            % In B frame
+w0 = 0*1.3*[pi/4 pi/2 2*pi/6]';            % In B frame
 
 for i = 1:length(Traj_ref)
-    g_ref(:,:,i) = SE3(SB0, Traj_ref(i,1:3)');
+    g_ref(:,:,i) = SE3(SB_ref, Traj_ref(i,1:3)');
 end
 
 X0 = [R0; w0; nu0; reshape(SB0,[],1)];      % Combined State for numerical integration
@@ -89,22 +88,11 @@ end
 
 R_axisym = R_axisym * Var.lstar;
 
-% Spacecraft Specification (axisymmetric)
-Var.J = diag([1,1,3/2]);
-Var.K = JtoK(Var.J);
-Var.I = [Var.J zeros(3); zeros(3) eye(3)];
-
-% Desired attitude
-%SB_ref = EA323toDCM(pi/4, pi/2, pi/5);
-SB_ref = eye(3);
-
-
 %% MPC 
 
 wb = waitbar(0, "preparing...");
 tic
 
-orbitalElementStep = 16;    
 for i = 1:length(Traj_ref)
     xd(:,:,i) = SE3(SB_ref, Traj_ref(i,1:3)');
 end
@@ -129,11 +117,11 @@ vd = [vd(:,1) repmat(vd(:,2:end), 1, Var.NumOrb+1)];                    % Desire
 % MPC Setup
 t0 = 0;             % Initial time
 
-x0 = xd(:,:,1);     % Initial state
-%x0 = SE3(eye(3), [1.3 0.2 0.02]');      % Initial offset 
+%x0 = xd(:,:,1);     % Initial state
+x0 = SE3(EA323toDCM(pi/4, pi/2, pi/5), xd(1:3,4,1) + 0*[0.002 0.001 -0.0005]');
 
-v0 = vd(:,1);       % Initial velocities
-%v0 = [w0; 0; 0;0];
+%v0 = vd(:,1);       % Initial velocities
+v0 = [w0; vd(4:6,1)];
 
 xx(:,:,1) = x0;     % xx is the history of states
 vv(:,1) = v0;       % vv is the history of velocities
@@ -156,7 +144,6 @@ while(mpciter < sim_tim/timestep)
     rot_pert = 0.001 * randn(3,1);
     trs_pert = 0.005 * randn(3,1);
 
-    %x0 = SE_addition(x0, SE3(att_pert, [0 0 0]'));
     v0 = v0 + [rot_pert; trs_pert] * timestep;
 
     % desired
@@ -180,10 +167,10 @@ while(mpciter < sim_tim/timestep)
 
     cvx_begin quiet
 
-    xtemp = [reshape(c,[],1); r; v0(4:6); v0(1:3)];
+        xtemp = [reshape(c,[],1); r; v0(4:6); v0(1:3)];
  
     % introduce variables:
-        variable u(6,N);
+        variable u(6,N-1);
         
         % cost function
         obj = 0;
@@ -196,23 +183,23 @@ while(mpciter < sim_tim/timestep)
             R_err = R_temp - g_des(1:3,4,i);
             h_temp = SE3(BS_err, R_err);
 
-            obj = obj + Q * norm(h_temp - eye(4), 'fro') + u(:,i)'*R*u(:,i);
+            obj = obj + Q * power(2,norm(h_temp - eye(4), 'fro')) + u(:,i)'*R*u(:,i);
             
-            xtemp = [xtemp, xtemp(:,end) + (A * xtemp(:,end) + B * u(:,i)) * timestep];
+            xtemp = [xtemp, xtemp(:,i) + (A * xtemp(:,i) + B * u(:,i)) * timestep];
               
         end
         % final cost
         BS_temp = reshape(xtemp(1:9,end), 3, 3);
-        BS_err = g_des(1:3,1:3,N+1)' * BS_temp;
+        BS_err = g_des(1:3,1:3,N)' * BS_temp;
 
         R_temp = xtemp(10:12,end);
-        R_err = R_temp - g_des(1:3,4,N+1);
+        R_err = R_temp - g_des(1:3,4,N);
         h_temp = SE3(BS_err, R_err);
-        obj = obj + Q * norm(h_temp - eye(4), 'fro');
+        obj = obj + Q * power(2,norm(h_temp - eye(4), 'fro'));
     
         minimize(obj)
         subject to 
-            norm(u(:,1:3)) <= 1
+            norm(u(:,1:3)) <= 0.5
             norm(u(:,4:6)) <= 10
         
     cvx_end
@@ -243,15 +230,13 @@ while(mpciter < sim_tim/timestep)
     
 end
 close(wb);
-toc
+elaptime = toc;
 
 %% MPC Result Analysis
 
 for i = 1:size(xx,3)
     [SB_mpc(:,:,i), R_mpc(:,i)] = invSE3(xx(:,:,i));
-    EP_mpc(:,i) = DCMtoEP(SB_mpc(:,:,i));
 end
-u_cl = u_cl;
 R_mpc = R_mpc * Var.lstar;
 
 t = linspace(0,sim_tim,size(R_mpc,2));
@@ -262,6 +247,7 @@ U_f = u_cl(3:6,:) * Var.lstar / Var.tstar;
 
 %draw_video_bas(g_axisym0,g_ref0,Var,2)
 
+%{
 figure(3)
 
 PlotSys(Var)
@@ -285,7 +271,7 @@ zlabel('$\hat z$ (km)')
 xlim([0.8,1.2]*Var.lstar)
 ylim([-0.2,0.2]*Var.lstar)
 zlim([-0.2,0.2]*Var.lstar)
-
+%}
 %draw_video_bas(g_axisym,g_ref,Var,4)
 
 % MPC Figureworks
@@ -317,6 +303,7 @@ u_cl = u_cl';
 tau_mag = sqrt(u_cl(:,1).^2 + u_cl(:,2).^2 + u_cl(:,3).^2);
 f_mag = sqrt(u_cl(:,4).^2 + u_cl(:,5).^2 + u_cl(:,6).^2);
 
+%%
 figure(12)
 
 for i = 1:size(xx,3)
@@ -329,6 +316,7 @@ for i = 1:size(xx,3)
     
     er(i) = norm(temp(:,:,i) - eye(4), 'fro')^2;
 end
+
 
 plot(t, er); grid
 xlabel('time')

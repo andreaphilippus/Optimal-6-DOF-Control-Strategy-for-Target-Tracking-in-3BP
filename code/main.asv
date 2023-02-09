@@ -40,11 +40,7 @@ Var.D1 = Var.m2 * Var.rEL / (Var.m1 + Var.m2);
 Var.mu = Var.m2 / (Var.m1 + Var.m2);
 Var.tol = 1e-12;                % Numerical Integration Tolerance
 
-<<<<<<< Updated upstream
-Var.NumOrb = 3;                 % Number of orbits to propagate
-=======
 Var.NumOrb = 1;                 % Number of orbits to propagate
->>>>>>> Stashed changes
 
 Var.vecSize = 5000;              % Attitude r   epresentation vector length, km
 
@@ -57,79 +53,10 @@ Var.L2x = L2LagrangePoint(Var.mu);
 % Southern Halo
 load('Shaloorbits.mat');
 
-<<<<<<< Updated upstream
-Traj_ref = x_Halo2{10};          % Reference Trajectory (pos/vel), nondim
-tspan = x_Halo2{10}(:,end);      % Reference time-span
-
-SB_ref = eye(3);                 % Reference Attitude
-
-%% Lyapunov Orbit
-%% Initial Condition
-
-SB0 = SB_ref;
-R0 = Traj_ref0(1,1:3)';         % In S frame
-nu0 = Traj_ref0(1,4:6)';        % In S frame
-w0 = [0 0 2*pi/60]';            % In B frame
-
-for i = 1:length(Traj_ref)
-    g_ref0(:,:,i) = SE3(SB0, Traj_ref0(i,1:3)');
-end
-
-X0 = [R0; w0; nu0; reshape(SB0,[],1)];      % Combined State for numerical integration
-
-%{
-%% Spherical, No Control
-
-Var.J = diag([1,1,1]);
-Var.K = JtoK(Var.J);
-Var.I = [Var.J zeros(3); zeros(3) eye(3)];
-
-[t_sph0, g_sph0, v_sph0] = propagator(X0, tspan0, Var);
-
-for i = 1:length(t_sph0)
-    [SB_sph0(:,:,i), R_sph0(:,i)] = invSE3(g_sph0(:,:,i));
-    EP_sph0(:,i) = DCMtoEP(SB_sph0(:,:,i));
-end
-
-R_sph0 = R_sph0 * Var.lstar;
-%}
-
-%% Axisymmetric, No Control
-
-Var.J = diag([1,1,3/2]);
-Var.K = JtoK(Var.J);
-Var.I = [Var.J zeros(3); zeros(3) eye(3)]; 
-
-[t_axisym0, g_axisym0, v_axisym0] = propagator(X0, tspan0, Var);
-
-for i = 1:length(t_axisym0)
-    [SB_axisym0(:,:,i), R_axisym0(:,i)] = invSE3(g_axisym0(:,:,i));
-    EP_axisym0(:,i) = DCMtoEP(SB_axisym0(:,:,i));
-end
-
-R_axisym0 = R_axisym0 * Var.lstar;
-=======
 Traj_ref = x_Halo2{1500};          % Reference Trajectory (pos/vel), nondim
 tspan = x_Halo2{1500}(:,end);      % Reference time-span
 
 SB_ref = eye(3);                 % Reference Attitude
->>>>>>> Stashed changes
-
-%{
-%% Random Shape, No Control
-
-Var.J = diag([1,1,3/2]) + [0 0 0; 0 0 0.5; 0 0.5 0];
-Var.I = [Var.J zeros(3); zeros(3) eye(3)];
-
-[t_ran0, g_ran0, v_ran0] = propagator(X0, tspan0, Var);
-
-for i = 1:length(t_ran0)
-    [SB_ran0(:,:,i), R_ran0(:,i)] = invSE3(g_ran0(:,:,i));
-    EP_ran0(:,i) = DCMtoEP(SB_ran0(:,:,i));
-end
-
-R_ran0 = R_ran0 * Var.lstar;
-%}
 
 %% Halo Orbit
 %% Initial Condition
@@ -147,28 +74,14 @@ X0 = [R0; w0; nu0; reshape(SB0,[],1)];      % Combined State for numerical integ
 
 %{
 %% Spherical, No Control
-<<<<<<< Updated upstream
-
-Var.J = diag([1,1,1]);
-Var.K = JtoK(Var.J);
-Var.I = [Var.J zeros(3); zeros(3) eye(3)];
-
-[t_sph, g_sph, v_sph] = propagator(X0, tspan, Var);
-
-=======
 Var.J = diag([1,1,1]);
 Var.K = JtoK(Var.J);
 Var.I = [Var.J zeros(3); zeros(3) eye(3)];
 [t_sph, g_sph, v_sph] = propagator(X0, tspan, Var);
->>>>>>> Stashed changes
 for i = 1:length(t_sph)
     [SB_sph(:,:,i), R_sph(:,i)] = invSE3(g_sph(:,:,i));
     EP_sph(:,i) = DCMtoEP(SB_sph(:,:,i));
 end
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 R_sph = R_sph * Var.lstar;
 %}
 
@@ -189,26 +102,13 @@ R_axisym = R_axisym * Var.lstar;
 
 %{
 %% Random Shape, No Control
-<<<<<<< Updated upstream
-
-Var.J = diag([1,1,3/2]) + [0 0 0; 0 0 0.5; 0 0.5 0];
-Var.I = [Var.J zeros(3); zeros(3) eye(3)];
-
-[t_ran, g_ran, v_ran] = propagator(X0, tspan, Var);
-
-=======
 Var.J = diag([1,1,3/2]) + [0 0 0; 0 0 0.5; 0 0.5 0];
 Var.I = [Var.J zeros(3); zeros(3) eye(3)];
 [t_ran, g_ran, v_ran] = propagator(X0, tspan, Var);
->>>>>>> Stashed changes
 for i = 1:length(t_ran)
     [SB_ran(:,:,i), R_ran(:,i)] = invSE3(g_ran(:,:,i));
     EP_ran(:,i) = DCMtoEP(SB_ran(:,:,i));
 end
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 R_ran = R_ran * Var.lstar;
 %}
 
@@ -266,13 +166,8 @@ fx = SX.sym('fx'); fy = SX.sym('fy'); fz = SX.sym('fz');
 controls = [tx ty tz fx fy fz]';
 n_controls = length(controls);
 
-<<<<<<< Updated upstream
-Var.fmax = 100;       % Maximum orbital control input
-Var.taumax = 100;     % Maximum attitude control input
-=======
 Var.fmax = 10;       % Maximum orbital control input
 Var.taumax = 0.5;     % Maximum attitude control input
->>>>>>> Stashed changes
 
 % Parameter vectors
 % Parameter vectors have dimensions of number of states times initial + horizon step
@@ -358,22 +253,9 @@ cst = [];   % Constraints
 %Q(1:3,1:3) = 0.001;             % Attitude
 %Q(1:3, 4) = 0.0001;             % Position
 
-<<<<<<< Updated upstream
-Q = diag([0.1 0.1 0.1]);
-
-R = zeros(6);
-R(1,1) = 0.01; % Torque in x
-R(2,2) = 0.01; % Torque in y
-R(3,3) = 0.01; % Torque in z
-R(4,4) = 1; % Thrust in x
-R(5,5) = 1; % Thrust in y
-R(6,6) = 1; % Thrust in z
-R = 1 * R;
-=======
 %Q = diag([1000 1000 1000]);
 Q = 10000;
 R = diag([1,1,1,10,10,10]);
->>>>>>> Stashed changes
 Termweight = 10;
 
 
@@ -384,16 +266,11 @@ for k = 1:N
     st = SE3(reshape(st_c(1:9), 3, 3), st_c(10:12)); % State, g
     
     % Reminder: P is the reference states
-<<<<<<< Updated upstream
-    p_c = P(:,k);
-    p_test = SE3(reshape(p_c(1:9), 3, 3), p_c(10:12)); % Desired state, g0
-=======
     p_c = P(:,k+1);
     %p_test = SE3(reshape(p_c(1:9), 3, 3), p_c(10:12)); % Desired state, g0
     
     % test: reference state:
     %p_c = xd(:,:,k+1);
->>>>>>> Stashed changes
 
     con = U(:,k);
     
@@ -413,11 +290,7 @@ for k = 1:N
 
     %obj = obj + Q*norm(st - p_c, 'fro')^2 + con' * R * con;
     
-<<<<<<< Updated upstream
-    %obj = obj + norm(Q.*(h - eye(4)), 'fro')^2 + con' * R * con;
-=======
     obj = obj + norm(Q.*(h - eye(4)), 'fro')^2 + con' * R * con;
->>>>>>> Stashed changes
     
     %obj = obj + norm(R_e) + norm(SB_e - eye(3), 'fro') + con' * R * con;
 
@@ -440,11 +313,6 @@ R_e = p_c(10:12) - st_c(10:12);
 
 h = SE3(SB_e, R_e);
 
-<<<<<<< Updated upstream
-%obj = obj + (st-P(:,N+1))'*Q*(st-P(:,N+1)); 
-
-%obj = obj + Termweight * norm(Q.*(h - eye(4)), 'fro')^2;
-=======
 obj = obj + R_e' * R_e;
 
 %obj = 1000;
@@ -455,7 +323,6 @@ obj = obj + norm(Q*(h - eye(4)), 'fro')^2;
 
 %X_f = [R_e; reshape(SB_e - eye(3), 9, 1)];
 %obj = obj + X_f' * X_f;
->>>>>>> Stashed changes
 
 %obj = obj + Termweight * (norm(R_e) + norm(SB_e - eye(3), 'fro'));
 
@@ -528,14 +395,6 @@ vv1 = [];           % Temporary velocity variable storage
 u_cl = [];          % Temporary control variable storage
 
 
-<<<<<<< Updated upstream
-while(mpciter < sim_tim/T)
-    
-    %p2 = zeros(6,1);        % Perturbation on velocities
-    %p = zeros(12,1);        % Perturbation on state
-
-    %v0 = v0 + p2 * T;       % Perturbation over step added
-=======
 
 % MPC
 
@@ -547,29 +406,19 @@ while(mpciter < sim_tim/T)
     trs_pert = 0.005 * randn(3,1);
     p2 = [rot_pert; trs_pert];
     v0 = v0 + p2 * T;       % Perturbation over step added
->>>>>>> Stashed changes
     
     % Set the values of the parameter vector
     
     % Known P has a structure of [init, ref(1), ref(2), ..., ref(N)]
 
     args.p = LinST(x0);
-<<<<<<< Updated upstream
-    for i = mpciter+1:mpciter+N+1
-        args.p(:,i-mpciter) = LinST(xd(:,:,i-mpciter+1));
-=======
     for i = mpciter+1:mpciter+N+6
         args.p(:,i-mpciter+1) = LinST(xd(:,:,i+1));
->>>>>>> Stashed changes
     end
 
     % Likewise, for V
 
-<<<<<<< Updated upstream
-    args.p = [args.p; vd(:,mpciter+1:mpciter+N+1)];
-=======
     args.p = [args.p; v0 vd(:,mpciter+2:mpciter+N+7)];
->>>>>>> Stashed changes
 
     %args.p = [LinST(x0) LinST(xd(:,:,mpciter+1:mpciter+N+1)) p; ...
     %    v0 vd(:,mpciter+1:mpciter+N+1) p2];  
@@ -597,8 +446,6 @@ while(mpciter < sim_tim/T)
     waitbar(mpciter / (sim_tim/T), wb, ...
         sprintf("calculating optimal control: %.2f%%", ...
         100*mpciter / (sim_tim/T)));
-<<<<<<< Updated upstream
-=======
     
     % If the spacecraft diverges off track too much, stops simulation
     if norm(x0(1:3,4) - xd(1:3,4,i-mpciter+1)) > 1e5/Var.lstar % 10^5 km dimensionalized
@@ -606,7 +453,6 @@ while(mpciter < sim_tim/T)
         break;
     end
     
->>>>>>> Stashed changes
 end
 close(wb);
 toc
@@ -626,32 +472,6 @@ U_f = u_cl(:,3:6) * Var.lstar / Var.tstar;
 
 %% Figureworks
 
-<<<<<<< Updated upstream
-figure(1)
-
-PlotSys(Var)
-
-% Reference orbit
-plot3(Traj_ref0(:,1)*Var.lstar, Traj_ref0(:,2)*Var.lstar, Traj_ref0(:,3)*Var.lstar, 'b-')
-plot3(R_axisym0(1,:), R_axisym0(2,:), R_axisym0(3,:), 'r-')
-
-for i = linspace(1, length(R_axisym0), 2*Var.NumOrb)
-    DrawAttitude(floor(i), g_axisym0, Var, 'cl')
-end
-
-legend('Moon', 'Earth', '$L_2$',...
-    'Reference Trajectory', 'Spacecraft Trajectory', 'location', 'best')
-axis equal
-xlabel('$\hat x$ (km)')
-ylabel('$\hat y$ (km)')
-zlabel('$\hat z$ (km)')
-%title({['Trajectory of the Spacecraft under SE(3) Dynamics'],['Without Control Input'],['Target: Lyapunov Orbit']})
-xlim([0.8,1.2]*Var.lstar)
-ylim([-0.2,0.2]*Var.lstar)
-zlim([-0.2,0.2]*Var.lstar)
-
-=======
->>>>>>> Stashed changes
 %draw_video_bas(g_axisym0,g_ref0,Var,2)
 
 figure(3)
