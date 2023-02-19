@@ -1,13 +1,7 @@
-function eta = logSE3(g0, g)
-    % g0 : reference state (to be targeted)
-    % g : active state (to be controlled)
+function eta = logSE3(g)
+    % g : usually error in this case
 
-    [C, R] = invSE(g);
-    [C0, R0] = invSE(g0);
-    
-    Ce = C0'*C;
-    Re = C0'*(R - R0);
-    invg0g = SE3(Ce, Re);
+    [Ce, Re] = invSE3(g);
 
     %% thetavec
     
